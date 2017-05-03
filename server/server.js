@@ -39,7 +39,6 @@ app.get('/todos/:id', (req, res) => {
         return res.status(400).send('invalid id');
     } else {
         Todo.findById(id).then((todo) => {
-            console.log('todo: ', todo);
             if (!todo) {
                 res.status(404).send('todo not found');
             } else {
