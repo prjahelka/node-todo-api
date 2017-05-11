@@ -161,10 +161,10 @@ describe('PATCH /todos/:id', () => {
             .end(done);
     });
 
-    it('should update a todo for a known id', (done) => {
+    it('should update todo 1 for a known id', (done) => {
         var newText = "new text";
         request(app)
-            .patch(`/todos/${todos[2]._id.toHexString()}`)
+            .patch(`/todos/${todos[1]._id.toHexString()}`)
             .send({ text: newText })
             .expect(200)
             .expect((res) => {
@@ -175,11 +175,11 @@ describe('PATCH /todos/:id', () => {
             .end(done);
     });
 
-    it('should update a todo for a known id', (done) => {
+    it('should update todo 2 for a known id', (done) => {
         var newText = "new text";
         request(app)
             .patch(`/todos/${todos[2]._id.toHexString()}`)
-            .send({ text: newText })
+            .send({ text: newText, completed: true })
             .expect(200)
             .expect((res) => {
                 expect(res.body.todo.text).toBe(newText)

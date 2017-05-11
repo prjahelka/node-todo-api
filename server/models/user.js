@@ -1,7 +1,9 @@
 var mongoose = require('mongoose');
 var validator = require('validator');
+const jwt = require('jsonwebtoken');
+const _ = require('lodash');
 
-var User = mongoose.model('User', {
+var UserSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
@@ -9,6 +11,7 @@ var User = mongoose.model('User', {
         minlength: 1,
         unique: true,
         validate: {
+            isAsync: false,
             validator: validator.isEmail,
             message: '{VALUE} is not a valid email.'
         }
@@ -29,6 +32,25 @@ var User = mongoose.model('User', {
         }
     }]
 });
+
+UserSchema.methods.toJSON = function() {
+    var user = this;
+    var userObj = user.toObject();
+
+    return _.pick(userObj, ['_id', 'email']);
+}
+
+UserSchema.methods.generateAuthToken = function() {
+    var user = this;
+    var access = 'auth';
+    var token = jwt.sign({ _id: user._id.toHexString(), access }, 'secretsaltkey').toString();
+    user.tokens.push({ access, token });
+    return user.save().then(() => {
+        return token;
+    });
+}
+
+var User = mongoose.model('User', UserSchema);
 
 module.exports = {
     User
