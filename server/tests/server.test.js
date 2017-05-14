@@ -6,30 +6,12 @@ const { ObjectID } = require('mongodb');
 
 const { app } = require('./../server.js');
 const { Todo } = require('./../models/todo.js');
+const { User } = require('./../models/user.js');
 
-const todos = [{
-    _id: new ObjectID(),
-    text: 'Test todo 0'
-}, {
-    _id: new ObjectID(),
-    text: 'Test todo 1',
-    completed: false
-}, {
-    _id: new ObjectID(),
-    text: 'Test todo 2',
-    completed: true,
-    completedAt: 333
-}];
+const { todos, populateTodos, users, populateUsers } = require('./seed/seed.js');
 
-// reset the todo collection to always start with the 3 todo documents defined above
-
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        Todo.insertMany(todos);
-    }).then(() => {
-        done();
-    })
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
 
@@ -179,7 +161,7 @@ describe('PATCH /todos/:id', () => {
         var newText = "new text";
         request(app)
             .patch(`/todos/${todos[2]._id.toHexString()}`)
-            .send({ text: newText, completed: true })
+            .send({ text: newText, completed: false })
             .expect(200)
             .expect((res) => {
                 expect(res.body.todo.text).toBe(newText)
@@ -188,4 +170,75 @@ describe('PATCH /todos/:id', () => {
             })
             .end(done);
     });
+});
+
+describe('GET /users/me', () => {
+
+    it('should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it('should return 401 if user not authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body).toEqual({});
+            })
+            .end(done);
+    });
+
+});
+
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        var email = 'prjahelka@msn.com';
+        var password = 'abc123';
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body._id).toExist();
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findOne({ email }).then((user) => {
+                    expect(user).toExist();
+                    expect(user.password).toNotBe(password);
+                    expect(user.email).toBe(email);
+                    done();
+                });
+            });
+    });
+
+    it('should return validation errors for invalid request', (done) => {
+        request(app)
+            .post('/users')
+            .send({ email: 'notenough', password: 'pass' })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should not create a user if email in use', (done) => {
+        request(app)
+            .post('/users')
+            .send({ email: users[1].email, password: users[1].password })
+            .expect(400)
+            .end(done);
+    });
+
 });
