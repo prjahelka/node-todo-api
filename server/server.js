@@ -110,6 +110,17 @@ app.post('/users', (req, res) => {
     });
 });
 
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send(user);
+        });
+    }).catch((err) => {
+        res.status(400).send();
+    });
+});
+
 // this is the learner route for creating the general middleware 
 // method for authenticating the user for other routes
 // code is migrated to authenticate.js
