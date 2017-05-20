@@ -11,18 +11,18 @@ const access = 'auth';
 const users = [{
     _id: user1id,
     email: 'prjahelka@maildomain.com',
-    password: 'mysecretpassword1',
+    password: 'testpassword1',
     tokens: [{
         access: access,
-        token: jwt.sign({ _id: user1id.toHexString(), access }, 'secretsaltkey').toString()
+        token: jwt.sign({ _id: user1id.toHexString(), access }, process.env.JWT_SECRET).toString()
     }]
 }, {
     _id: user2id,
     email: 'prjahelka@mail2domain.com',
-    password: 'mysecretpassword2',
+    password: 'testpassword2',
     tokens: [{
         access: access,
-        token: jwt.sign({ _id: user2id.toHexString(), access }, 'secretsaltkey').toString()
+        token: jwt.sign({ _id: user2id.toHexString(), access }, process.env.JWT_SECRET).toString()
     }]
 }];
 
